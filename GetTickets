@@ -1,0 +1,121 @@
+local player = game.Players.LocalPlayer
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AutoTicketUI"
+screenGui.ResetOnSpawn = false -- เวลาเราตายแล้วเกิดใหม่ UI จะไม่หาย
+screenGui.Parent = player:WaitForChild("PlayerGui")
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 180, 0, 60)
+mainFrame.Position = UDim2.new(0.5, -90, 0.8, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+mainFrame.BackgroundTransparency = 0.05
+mainFrame.BorderSizePixel = 0 -- ไม่มีขอบ
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.Active = true
+mainFrame.Parent = screenGui
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        local startPos = input.Position
+        local startFramePos = mainFrame.Position
+
+        local conn
+        conn = input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                conn:Disconnect()
+            end
+        end)
+
+        input.InputChanged:Connect(function(move)
+            if move.UserInputType == Enum.UserInputType.MouseMovement or move.UserInputType == Enum.UserInputType.Touch then
+                local delta = move.Position - startPos
+                mainFrame.Position = UDim2.new(
+                    startFramePos.X.Scale,
+                    startFramePos.X.Offset + delta.X,
+                    startFramePos.Y.Scale,
+                    startFramePos.Y.Offset + delta.Y
+                )
+            end
+        end)
+    end
+end)
+
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0, 16)
+frameCorner.Parent = mainFrame
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Name = "ToggleButton"
+toggleButton.Size = UDim2.new(1, -16, 1, -16)
+toggleButton.Position = UDim2.new(0, 8, 0, 8)
+toggleButton.BackgroundColor3 = Color3.fromRGB(70, 160, 240)
+toggleButton.BorderSizePixel = 0
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.TextScaled = true
+toggleButton.Font = Enum.Font.GothamBold
+toggleButton.Text = "OFF" -- สถานะเริ่มต้น
+toggleButton.TextStrokeTransparency = 0.8
+toggleButton.AutoButtonColor = true
+toggleButton.Parent = mainFrame
+
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 12)
+buttonCorner.Parent = toggleButton
+
+local buttonStroke = Instance.new("UIStroke")
+buttonStroke.Thickness = 1
+buttonStroke.Color = Color3.fromRGB(255, 255, 255)
+buttonStroke.Transparency = 0.4
+buttonStroke.Parent = toggleButton
+getgenv().AutoTicketFarm = false
+local function startAutoTicket()
+    task.spawn(function()
+        while getgenv().AutoTicketFarm do
+            task.wait(0.1)
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = player.Character.HumanoidRootPart
+                local ticketsFolder = workspace:FindFirstChild("Game")
+                    and workspace.Game:FindFirstChild("Effects")
+                    and workspace.Game.Effects:FindFirstChild("Tickets")
+                if ticketsFolder then
+                    for _, ticket in pairs(ticketsFolder:GetChildren()) do
+                        if not getgenv().AutoTicketFarm then break end
+                        local root = ticket:FindFirstChild("HumanoidRootPart")
+                        if root then
+                            local pos = root.Position
+                            local downPos = CFrame.new(pos.X, pos.Y - 15, pos.Z)
+                            local upPos = CFrame.new(pos.X, pos.Y + 2, pos.Z)
+                            hrp.CFrame = downPos
+                            task.wait(0.15)
+                            hrp.CFrame = upPos
+                            task.wait(0.05)
+
+                            local success = false
+                            if game:GetService("ReplicatedStorage"):FindFirstChild("Events") 
+                               and game.ReplicatedStorage.Events:FindFirstChild("CollectTicket") then
+                                local ok, _ = pcall(function()
+                                    game.ReplicatedStorage.Events.CollectTicket:FireServer(ticket)
+                                end)
+                                success = ok
+                            end
+
+                            local startTime = tick()
+                            repeat task.wait(0.05) until not ticket.Parent or tick() - startTime > 2
+                            if not ticket.Parent or success then
+                                hrp.CFrame = CFrame.new(pos.X, 1300, pos.Z) -- ย้ายขึ้นบนเล็กน้อย
+                                task.wait(0.3)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
+
+toggleButton.MouseButton1Click:Connect(function()
+    getgenv().AutoTicketFarm = not getgenv().AutoTicketFarm
+    toggleButton.Text = getgenv().AutoTicketFarm and "ON" or "OFF"
+    if getgenv().AutoTicketFarm then
+        startAutoTicket()
+    end
+end)
