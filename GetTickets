@@ -1,7 +1,10 @@
+# Script By XeroHub เอาไปใช้พัฒนาต่อหรือดัดแปลงได้เลยครับผม🎮
+# Basic ออโต้เก็บท้กเก็ต 
+
 local player = game.Players.LocalPlayer
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AutoTicketUI"
-screenGui.ResetOnSpawn = false -- เวลาเราตายแล้วเกิดใหม่ UI จะไม่หาย
+screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
@@ -9,7 +12,7 @@ mainFrame.Size = UDim2.new(0, 180, 0, 60)
 mainFrame.Position = UDim2.new(0.5, -90, 0.8, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 mainFrame.BackgroundTransparency = 0.05
-mainFrame.BorderSizePixel = 0 -- ไม่มีขอบ
+mainFrame.BorderSizePixel = 0
 mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.Active = true
 mainFrame.Parent = screenGui
@@ -101,7 +104,7 @@ local function startAutoTicket()
                             local startTime = tick()
                             repeat task.wait(0.05) until not ticket.Parent or tick() - startTime > 2
                             if not ticket.Parent or success then
-                                hrp.CFrame = CFrame.new(pos.X, 1300, pos.Z) -- ย้ายขึ้นบนเล็กน้อย
+                                hrp.CFrame = CFrame.new(pos.X, 1300, pos.Z)
                                 task.wait(0.3)
                             end
                         end
